@@ -1,3 +1,4 @@
+import time
 import cv2
 import numpy as np
 
@@ -7,28 +8,45 @@ def biggest_contour(contours):
     max_area = 0
     for i in contours:
         area = cv2.contourArea(i)
+       
         if area > 1000:
+            
             peri = cv2.arcLength(i, True)
             approx = cv2.approxPolyDP(i, 0.015 * peri, True)
+            
             if area > max_area and len(approx) == 4:
                 biggest = approx
                 max_area = area
+        else :
+            print("your image is way bigger", area)
     return biggest
-
-
-img = cv2.imread('./0.jpg')
+immm =cv2.imread('./0.jpg')
+h = immm.shape[0]
+w= immm.shape[1]
+print("beofre",immm.shape[0])
+target_resolution = (round(w* 30 /100) , round(h * 30 /100))
+print(target_resolution)
+img_res =  cv2.resize(immm, target_resolution)
+print("after",img_res.shape)
+cv2.imwrite('resolved-document.jpg', img_res)
+time.sleep(1)
+img =  img_res
 img_original = img.copy()
+
+print("beofre",img.shape)
+
 
 # Image modification
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 gray = cv2.bilateralFilter(gray, 20, 30, 30)
 edged = cv2.Canny(gray, 10, 20)
-
+print("worked")
 # Contour detection
 contours, hierarchy = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
 
 biggest = biggest_contour(contours)
+print(biggest)
 
 cv2.drawContours(img, [biggest], -1, (0, 255, 0), 3)
 
@@ -66,10 +84,12 @@ img_output = cv2.warpPerspective(img_original, matrix, (max_width, max_height))
 gray = np.stack((gray,) * 3, axis=-1)
 edged = np.stack((edged,) * 3, axis=-1)
 
-img_hor = np.hstack((img_original, gray, edged, img))
+img_hor = np.hstack((img_original, img))
 cv2.imshow("Contour detection", img_hor)
 cv2.imshow("Warped perspective", img_output)
-
+target_resolution = (w ,h)
+print(target_resolution)
+img_output =  cv2.resize(img_output, target_resolution)
 cv2.imwrite('output-document.jpg', img_output)
 
 cv2.waitKey(0)
